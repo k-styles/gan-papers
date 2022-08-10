@@ -1,0 +1,1 @@
+from discriminator_model import discriminator
