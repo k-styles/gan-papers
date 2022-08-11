@@ -63,4 +63,10 @@ for iter in range(iterations):
         # m training samples have already been sampled
         noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
         for noise_sample, train_sample in zip(nois_ds, train_ds):
+            discriminator.learn(noise_sample=noise_sample, data_sample=train_sample, generator_model=generator)
+        
+        noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
+        for noise_sample, train_sample in zip(nois_ds, train_ds):
+            generator.learn(noise_sample=noise_sample, discriminator_model=discriminator)
+
             
