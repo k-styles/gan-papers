@@ -39,13 +39,40 @@ class Sigmoid_layer(tf.keras.layers.Layer):
 class Discriminator(tf.keras.Model):
     def __init__(self, gen_struc=[([16,32], "relu"),([64,64], "relu"),([32,16], "relu")], output_activation="sigmoid", output_shape=(1,), **kwargs):
         super(Discriminator, self).__init__(**kwargs)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
         self.output_activation = tf.keras.activations.get(output_activation)
         self.dense_blocks = []
         self.dense_blocks.append(tf.keras.layers.Flatten())
         for dense_count, activation in gen_struc:
             self.dense_blocks.append(Dense_block(dense_count=dense_count, activation=activation))
-        self.dense_blocks.append(Sigmoid_layer(output_shape=output_shape, activation=output_activation))
+        self.out_sigmoid_layer = Sigmoid_layer(output_shape=output_shape, activation=output_activation)
     
+    def get_loss(self, noise_sample, data_sample, generator_model):
+        return tf.math.log(self.call(data_sample)) + tf.math.log(1 - self.call(generator_model(noise_sample)))
+    
+    def get_gradients(self, noise_sample, data_sample, generator_model):
+        with tf.GradientTape() as tape:
+            self.variables_list = []
+            
+            # Capture Variables
+            for block in self.dense_block:
+                for layer in block.layers:
+                    if layer.variables!=0:
+                        tape.watch(layer.variables)
+                        self.variables_list.append(layer.variables[0])
+                        self.variables_list.append(layer.variables[1])
+
+            tape.watch(self.out_sigmoid_layer.variables)
+            self.variables_list.append(self.out_sig_layer.variables[0])
+            self.variables_list.append(self.out_sig_layer.variables[1])
+            L = self.get_loss(noise_sample=noise_sample, data_sample=data_sample, generator_model=generator_model)
+            grads = tape.gradient(L, self.variables_list)
+        return grads
+    
+    def learn(self, noise_sample, data_sample, generator_model):
+        grads = self.get_gradients(noise_sample=noise_sample, data_sample=data_sample, generator_model=generator_model)
+        self.optimizer.apply_gradients(zip(grads, self.variables_list))
+
     #Input as a tensor only
     def call(self, input):
         # Sample random vector
@@ -55,4 +82,4 @@ class Discriminator(tf.keras.Model):
         Z = self.input_layer
         for block in self.dense_blocks:
             Z = block(Z)
-        return Z
+        return self.out_sigmoid_layer(Z)

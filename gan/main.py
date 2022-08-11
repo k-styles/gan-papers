@@ -4,6 +4,8 @@ from discriminator_model import discriminator
 from matplotlib import pyplot as plt
 import logging
 
+tf.compat.v1.disable_eager_execution()
+
 data = input("What data you want to train on? (mnist, tfd): ")
 if data == "mnist":
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
@@ -27,17 +29,38 @@ if(do_you == "yes"):
     plt.show()
 
 
-
+# Random Input Tensor to generator
 tf.random.set_seed(5)
 random_tensor = tf.random.normal(shape=[10], mean=0.0, stddev=1.0)
-
+# Build generator
 generator = generator.Generator()
 generator.build(input_shape=random_tensor.shape)
 print(generator.summary())
 
+# Random Input Tensor to discriminator
 tf.random.set_seed(5)
 random_tensor_image = tf.random.normal(shape=[28,28], mean=0.0, stddev=1.0)
-
+# Build discriminator
 discriminator = discriminator.Discriminator()
 discriminator.build(input_shape=random_tensor_image.shape)
 print(discriminator.summary())
+
+inputs = tf.keras.Input(tensor=random_tensor)
+gen_outputs = generator(inputs)
+outputs = discriminator(gen_outputs)
+
+GAN = tf.keras.Model(inputs=inputs, outputs=outputs)
+print(GAN.summary())
+
+# Training
+noise_input_shape = 10
+k = 1
+iterations=2
+m = 32
+train_ds = tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
+for iter in range(iterations):
+    for discriminator_step in range(k):
+        # m training samples have already been sampled
+        noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
+        for noise_sample, train_sample in zip(nois_ds, train_ds):
+            
