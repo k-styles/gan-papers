@@ -4,7 +4,7 @@ from discriminator_model import discriminator
 from matplotlib import pyplot as plt
 import logging
 
-tf.compat.v1.disable_eager_execution()
+#tf.compat.v1.disable_eager_execution()
 
 data = input("What data you want to train on? (mnist, tfd): ")
 if data == "mnist":
@@ -29,44 +29,52 @@ if(do_you == "yes"):
     plt.show()
 
 
-# Random Input Tensor to generator
-tf.random.set_seed(5)
-random_tensor = tf.random.normal(shape=[10], mean=0.0, stddev=1.0)
-# Build generator
-generator = generator.Generator()
-generator.build(input_shape=random_tensor.shape)
-print(generator.summary())
+# # Random Input Tensor to generator
+# tf.random.set_seed(5)
+# random_tensor = tf.random.normal(shape=[10], mean=0.0, stddev=1.0)
+# # Build generator
+# generator = generator.Generator()
+# generator.build(input_shape=random_tensor.shape)
+# print(generator.summary())
 
-# Random Input Tensor to discriminator
-tf.random.set_seed(5)
-random_tensor_image = tf.random.normal(shape=[28,28], mean=0.0, stddev=1.0)
-# Build discriminator
-discriminator = discriminator.Discriminator()
-discriminator.build(input_shape=random_tensor_image.shape)
-print(discriminator.summary())
+# # Random Input Tensor to discriminator
+# tf.random.set_seed(5)
+# random_tensor_image = tf.random.normal(shape=[28,28], mean=0.0, stddev=1.0)
+# # Build discriminator
+# discriminator = discriminator.Discriminator()
+# discriminator.build(input_shape=random_tensor_image.shape)
+# print(discriminator.summary())
 
-inputs = tf.keras.Input(tensor=random_tensor)
-gen_outputs = generator(inputs)
-outputs = discriminator(gen_outputs)
+# inputs = tf.keras.Input(tensor=random_tensor)
+# gen_outputs = generator(inputs)
+# outputs = discriminator(gen_outputs)
 
-GAN = tf.keras.Model(inputs=inputs, outputs=outputs)
-print(GAN.summary())
+# GAN = tf.keras.Model(inputs=inputs, outputs=outputs)
+# print(GAN.summary())
 
 # Training
+generator = generator.Generator()
+discriminator = discriminator.Discriminator()
+
+#GAN = tf.keras.Model(inputs=input, outputs=outputs)
+
 noise_input_shape = 10
 k = 1
 iterations=2
 m = 32
-train_ds = tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
+train_ds = [data_sample for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
 for iter in range(iterations):
     for discriminator_step in range(k):
         # m training samples have already been sampled
         noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
-        for noise_sample, train_sample in zip(nois_ds, train_ds):
+        for noise_sample, train_sample in zip(noise_ds, train_ds):
             discriminator.learn(noise_sample=noise_sample, data_sample=train_sample, generator_model=generator)
         
         noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
-        for noise_sample, train_sample in zip(nois_ds, train_ds):
+        for noise_sample, train_sample in zip(noise_ds, train_ds):
             generator.learn(noise_sample=noise_sample, discriminator_model=discriminator)
+grads = generator.get_gradients(noise_sample=random_tensor, discriminator_model=discriminator)
+tf.print("Gradients: ", grads)
 
-            
+loss = generator.get_loss(noise_sample=random_tensor, discriminator_model=discriminator)
+tf.print("Loss: ", loss)

@@ -36,33 +36,31 @@ class Generator(tf.keras.Model):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
     
     def get_loss(self, noise_sample, discriminator_model):
-        return tf.math.log(1 - discriminator(self.call(noise_sample)))
+        return tf.math.log(1 - discriminator_model(self.call(noise_sample)))
     
-    def get_gradients(self, noise_sample, discriminator_model):
-        with tf.GradientTape() as tape:
-            self.variables_list = []
-            for block in self.dense_block:
+    @tf.function
+    def learn(self, noise_sample, discriminator_model):
+        with tf.GradientTape(persistent=True) as tape:
+            for block in self.dense_blocks:
                 for layer in block.layers:
                     tape.watch(layer.variables)
-                    self.variables_list.append(layer.variables[0])
-                    self.variables_list.append(layer.variables[1])
             tape.watch(self.output_layer.variables)
-            self.variables_list.append(self.output_layer.variables[0])
-            self.variables_list.append(self.output_layer.variables[1])
             L = self.get_loss(noise_sample=noise_sample, discriminator_model=discriminator_model)
-            grads = tape.gradient(L, self.variables_list)
+        grads = tape.gradient(L, self.trainable_weights)
+        del tape
+        self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
         return grads
-    
-    def learn(self, noise_sample, discriminator_model):
-        grads = self.get_gradients(noise_sample=noise_sample, discriminator_model=discriminator_model)
-        self.optimizer.apply_gradients(zip(grads, self.variables_list))
 
     def call(self, input):
         # Sample random vector
         #tf.random.set_seed(5)
         #input_vector = tf.random.normal(shape=[input_shape], mean=0.0, stddev=1.0)
-        self.input_layer = tf.keras.Input(shape=(10,))
-        Z = self.input_layer
+        
+        # Uprank the Input tensor. Need this after tensorflow 2.7
+        if input.shape.rank == 1:
+            input = tf.expand_dims(input, axis=-1)
+
+        Z = input
         for block in self.dense_blocks:
             Z = block(Z)
         return self.output_layer(Z)
