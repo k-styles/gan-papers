@@ -67,14 +67,10 @@ for iter in range(iterations):
     for discriminator_step in range(k):
         # m training samples have already been sampled
         noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
+        
         for noise_sample, train_sample in zip(noise_ds, train_ds):
             discriminator.learn(noise_sample=noise_sample, data_sample=train_sample, generator_model=generator)
         
-        noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
+       noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
         for noise_sample, train_sample in zip(noise_ds, train_ds):
             generator.learn(noise_sample=noise_sample, discriminator_model=discriminator)
-grads = generator.get_gradients(noise_sample=random_tensor, discriminator_model=discriminator)
-tf.print("Gradients: ", grads)
-
-loss = generator.get_loss(noise_sample=random_tensor, discriminator_model=discriminator)
-tf.print("Loss: ", loss)
