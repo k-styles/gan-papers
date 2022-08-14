@@ -7,12 +7,13 @@ class Dense_block(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         self.activation = tf.keras.activations.get(activation)
         self.layers = []
-        for _, num in enumerate(dense_count):
-            self.layers.append(tf.keras.layers.Dense(num, activation=self.activation))
+        for i, num in enumerate(dense_count):
+            self.layers.append(tf.keras.layers.Dense(num, activation=self.activation, name=f"generator_dense{i}"))
     
     def call(self, input):
         z = input
         for i, layer in enumerate(self.layers):
+            print("[Inside Generator Shapes]: ", z.shape)
             z = layer(z)
         return z
 
@@ -45,7 +46,7 @@ class Generator(tf.keras.Model):
                 for layer in block.layers:
                     tape.watch(layer.variables)
             tape.watch(self.output_layer.variables)
-            L = self.get_loss(noise_sample=noise_sample, discriminator_model=discriminator_model)
+        L = self.get_loss(noise_sample=noise_sample, discriminator_model=discriminator_model)
         grads = tape.gradient(L, self.trainable_weights)
         del tape
         self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
@@ -58,9 +59,13 @@ class Generator(tf.keras.Model):
         
         # Uprank the Input tensor. Need this after tensorflow 2.7
         if input.shape.rank == 1:
-            input = tf.expand_dims(input, axis=-1)
+            input = tf.expand_dims(input, axis=0)
+            
 
         Z = input
         for block in self.dense_blocks:
             Z = block(Z)
-        return self.output_layer(Z)
+            print("[Generator Shapes]: ", Z.shape)
+        Z = self.output_layer(Z)
+        print("[Generator Shapes]: ", Z.shape)
+        return Z
