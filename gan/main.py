@@ -60,7 +60,7 @@ discriminator = discriminator.Discriminator()
 
 noise_input_shape = 10
 k = 1
-iterations=2
+iterations=100
 m = 32
 
 generator.build(input_shape=[10])
@@ -82,10 +82,16 @@ for iter in range(iterations):
         for noise_sample, train_sample in zip(noise_ds, train_ds):
             #print("\tNoise_Sample:", noise_sample.shape, "Train_sample:", train_sample.shape)
             disc_learn.learn(noise_sample=noise_sample, data_sample=train_sample)
-        #tf.print("\tDisciminator Loss:", disc_learn.loss)
+        #tf.print(disc_learn.loss)
+        #tf.print("Disciminator Loss:", disc_learn.loss)
         
     noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
     for noise_sample, train_sample in zip(noise_ds, train_ds):
         gen_learn.learn(noise_sample=noise_sample)
-    #tf.print("\tGenerator Loss:", gen_learn.loss)
-    
+    #tf.print(gen_learn.loss)
+    #tf.print("Generator Loss:", gen_learn.loss)
+
+test_noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
+
+plt.imshow(tensor=generator(test_noise_sample))
+plt.show()

@@ -45,6 +45,7 @@ class Generator(tf.keras.Model):
             self.dense_blocks.append(Dense_block(dense_count=dense_count, activation=activation))
         self.output_layer = Output_layer(output_shape=output_shape, activation=output_activation)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
+        self.out_shape = output_shape
     
     @tf.function
     def call(self, input):
@@ -59,4 +60,4 @@ class Generator(tf.keras.Model):
         Z = input
         for block in self.dense_blocks:
             Z = block(Z)
-        return self.output_layer(Z)
+        return tf.reshape(tensor=self.output_layer(Z), shape=(self.out_shape[0], self.out_shape[1]))
