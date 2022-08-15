@@ -68,6 +68,7 @@ discriminator.build(input_shape=(28,28))
 
 train_ds = [data_sample for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
 for iter in range(iterations):
+    print(type(train_ds[0]))
     for discriminator_step in range(k):
         # m training samples have already been sampled
         noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
