@@ -3,7 +3,7 @@ from generator_model import generator
 from discriminator_model import discriminator
 from matplotlib import pyplot as plt
 import logging
-
+from training_toolkit import train_tools
 #tf.compat.v1.disable_eager_execution()
 
 data = input("What data you want to train on? (mnist, tfd): ")
@@ -67,15 +67,25 @@ generator.build(input_shape=[10])
 discriminator.build(input_shape=(28,28))
 
 train_ds = [data_sample for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
+
+# Get train tools
+gen_learn = train_tools.Generator_Learn(generator_model=generator, discriminator_model=discriminator)
+disc_learn = train_tools.Discriminator_Learn(generator_model=generator, discriminator_model=discriminator)
+
+print(f"GAN Training has started.\nDataSet: {data}\nIterations:{iterations} | k: {k} | Batch_size: {k}")
 for iter in range(iterations):
-    print(type(train_ds[0]))
+    print(f"[Epoch {iter}]: ")
     for discriminator_step in range(k):
         # m training samples have already been sampled
+        print(f"\tDiscriminator Epoch {k}:")
         noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
         for noise_sample, train_sample in zip(noise_ds, train_ds):
-            print("Noise_Sample:", noise_sample.shape, "Train_sample:", train_sample.shape)
-            discriminator.learn(noise_sample=noise_sample, data_sample=train_sample, generator_model=generator)
+            #print("\tNoise_Sample:", noise_sample.shape, "Train_sample:", train_sample.shape)
+            disc_learn.learn(noise_sample=noise_sample, data_sample=train_sample)
+        #tf.print("\tDisciminator Loss:", disc_learn.loss)
         
     noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
     for noise_sample, train_sample in zip(noise_ds, train_ds):
-        generator.learn(noise_sample=noise_sample, discriminator_model=discriminator)
+        gen_learn.learn(noise_sample=noise_sample)
+    #tf.print("\tGenerator Loss:", gen_learn.loss)
+    

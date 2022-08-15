@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
-import keras.backend as K
 
 # Sigmoid and ReLU activations
 class Dense_block(tf.keras.layers.Layer):
@@ -11,7 +10,7 @@ class Dense_block(tf.keras.layers.Layer):
             self.activation = tf.keras.activations.get(activation)
             self.layers = []
             for _, num in enumerate(dense_count):
-                self.layers.append(tf.keras.layers.Dense(num, activation=self.activation))
+                self.layers.append(tf.keras.layers.Dense(num, activation=self.activation, name=f"discriminator_dense{i}"))
         elif maxout:
             self.layers = []
             self.activation = tf.keras.activations.get(activation)
@@ -22,6 +21,7 @@ class Dense_block(tf.keras.layers.Layer):
         else:
             print("[Discriminator Error]: Invalid value for maxout")
     
+    @tf.function
     def call(self, input):
         z = input
         for i, layer in enumerate(self.layers):
@@ -34,6 +34,7 @@ class Sigmoid_layer(tf.keras.layers.Layer):
         self.activation = tf.keras.activations.get(activation)
         self.output_layer = tf.keras.layers.Dense(output_shape[0], activation=self.activation)
     
+    @tf.function
     def call(self, input):
         return self.output_layer(input)
 
@@ -49,45 +50,20 @@ class Discriminator(tf.keras.Model):
         for i, (dense_count, activation) in enumerate(gen_struc):
             self.dense_blocks.append(Dense_block(dense_count=dense_count, activation=activation, name=f"dense_block{i}"))
         self.out_sigmoid_layer = Sigmoid_layer(output_shape=output_shape, activation=output_activation)
-    
-    def get_loss(self, noise_sample, data_sample, generator_model):
-        loss = K.log(self.call(data_sample)) + K.log(1 - self.call(generator_model(noise_sample)))
-        return tf.losses.categorical_crossentropy(noise_sample, noise_sample)
-
-    @tf.function
-    def learn(self, noise_sample, data_sample, generator_model):
-        discr_variables = []
-        with tf.GradientTape(persistent=False, watch_accessed_variables=False) as tape:
-            # Capture Variables
-            for block in self.dense_blocks:
-                for layer in block.layers:
-                    if len(layer.variables)!=0:
-                        tape.watch(layer.variables)
-                        discr_variables.append(layer.variables[0])
-                        discr_variables.append(layer.variables[1])
-            tape.watch(self.out_sigmoid_layer.variables)
-            discr_variables.append(self.out_sigmoid_layer.variables[0])
-            discr_variables.append(self.out_sigmoid_layer.variables[1])
-            L = self.get_loss(noise_sample=noise_sample, data_sample=data_sample, generator_model=generator_model)
-        grads = tape.gradient(L, discr_variables)
-        del tape
-        self.optimizer.apply_gradients(zip(grads, discr_variables))
-        return grads
-    
 
     #Input as a tensor only
+    @tf.function
     def call(self, input):
         # Sample random vector
         #tf.random.set_seed(5)
         #input_vector = tf.random.normal(shape=[input_shape], mean=0.0, stddev=1.0)
         
         # Uprank the Input tensor. Need this after tensorflow 2.7
-        if input.shape.rank == 1:
-            input = tf.expand_dims(input, axis=-1)
-        
-        self.input_layer = tf.keras.Input(shape=input.shape)
-        Z = self.flatten_layer(self.input_layer)
-        print("Flattened Shapes: ", Z.shape)
+        # The first element in Input is number of samples. To flatten, this code provides 1 at axis 0
+        if input.shape.rank == 2:
+            input = tf.expand_dims(input, axis=0)
+        Z = self.flatten_layer(input)
         for block in self.dense_blocks:
             Z = block(Z)
+        
         return self.out_sigmoid_layer(Z)
