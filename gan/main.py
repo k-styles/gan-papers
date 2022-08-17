@@ -4,7 +4,7 @@ from discriminator_model import discriminator
 from matplotlib import pyplot as plt
 import logging
 from training_toolkit import train_tools
-tf.config.run_functions_eagerly(True)
+#tf.config.run_functions_eagerly(True)
 
 data = input("What data you want to train on? (mnist, tfd): ")
 if data == "mnist":
@@ -53,15 +53,15 @@ if(do_you == "yes"):
 # print(GAN.summary())
 
 # Training
-generator = generator.Generator()
-discriminator = discriminator.Discriminator()
+generator = generator.Generator(learning_rate=1e-3, epsilon=0.1)
+discriminator = discriminator.Discriminator(learning_rate=1e-5, epsilon=0.1)
 
 #GAN = tf.keras.Model(inputs=input, outputs=outputs)
 
 noise_input_shape = 10
 k = 1
-iterations=1
-m = 32
+iterations=1000
+m = 64
 
 generator.build(input_shape=[10])
 discriminator.build(input_shape=(28,28))
@@ -88,21 +88,22 @@ for iter in range(iterations):
     print(f"[Epoch {iter}]: ")
     for discriminator_step in range(k):
         # m training samples have already been sampled
-        print(f"\tDiscriminator Epoch {k}:")
+        print(f"\tDiscriminator Epoch {discriminator_step + 1}:")
         noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
         for noise_sample, train_sample in zip(noise_ds, train_ds):
             #print("\tNoise_Sample:", noise_sample.shape, "Train_sample:", train_sample.shape)
             disc_learn.learn(noise_sample=noise_sample, data_sample=train_sample)
-            print("Disciminator Loss:", disc_learn.loss)
+        #print("Disciminator Loss:", disc_learn.loss)
         #tf.print(disc_learn.loss)
         
     noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
     for noise_sample, train_sample in zip(noise_ds, train_ds):
         gen_learn.learn(noise_sample=noise_sample)
-        print("Generator Loss:", gen_learn.loss)
+    #print("Generator Loss:", gen_learn.loss)
     #tf.print(gen_learn.loss)
 
 test_noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
 
 plt.imshow(generator(test_noise_sample))
+#plt.imshow(train_ds[0])
 plt.show()

@@ -37,14 +37,15 @@ class Output_layer(tf.keras.layers.Layer):
 #     def call(self, input):
 #         return self.output_layer(input)
 class Generator(tf.keras.Model):
-    def __init__(self, gen_struc=[([16,32], "relu"),([16,32], "sigmoid"),([16,32], "relu")], output_activation="relu", output_shape=(28,28), **kwargs):
+    def __init__(self, gen_struc=[([16,32], "relu"),([16,32], "sigmoid"),([16,32], "relu")], output_activation="relu", output_shape=(28,28), 
+                 learning_rate=5e-03, epsilon=0.1, beta_1=0.9, beta_2=0.999, amsgrad=False, name='Adam', **kwargs):
         super(Generator, self).__init__(**kwargs)
         self.dense_blocks = []
         self.output_activation = tf.keras.activations.get(output_activation)
         for dense_count, activation in gen_struc:
             self.dense_blocks.append(Dense_block(dense_count=dense_count, activation=activation))
         self.output_layer = Output_layer(output_shape=output_shape, activation=output_activation)
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=1, epsilon=13)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate, epsilon=epsilon, beta_1=beta_1, beta_2=beta_2, amsgrad=amsgrad, name=name, **kwargs)
         self.out_shape = output_shape
     
     @tf.function

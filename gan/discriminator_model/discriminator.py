@@ -40,9 +40,10 @@ class Sigmoid_layer(tf.keras.layers.Layer):
 
 
 class Discriminator(tf.keras.Model):
-    def __init__(self, gen_struc=[([16,32], "relu"),([64,64], "relu"),([32,16], "relu")], output_activation="sigmoid", output_shape=(1,), **kwargs):
+    def __init__(self, gen_struc=[([16,32], "relu"),([64,64], "relu"),([32,16], "relu")], output_activation="sigmoid", output_shape=(1,),
+                 learning_rate=5e-03, epsilon=0.1, beta_1=0.9, beta_2=0.999, amsgrad=False, name='Adam', **kwargs):
         super(Discriminator, self).__init__(**kwargs)
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate, epsilon=epsilon, beta_1=beta_1, beta_2=beta_2, amsgrad=amsgrad, name=name, **kwargs)
         self.output_activation = tf.keras.activations.get(output_activation)
         self.dense_blocks = []
         self.flatten_layer = tf.keras.layers.Flatten()
