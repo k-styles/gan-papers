@@ -44,7 +44,7 @@ class Generator(tf.keras.Model):
         for dense_count, activation in gen_struc:
             self.dense_blocks.append(Dense_block(dense_count=dense_count, activation=activation))
         self.output_layer = Output_layer(output_shape=output_shape, activation=output_activation)
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=1, epsilon=13)
         self.out_shape = output_shape
     
     @tf.function
