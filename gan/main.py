@@ -61,7 +61,7 @@ discriminator = discriminator.Discriminator(learning_rate=1e-5, epsilon=0.1)
 noise_input_shape = 10
 k = 1
 iterations=1000
-m = 64
+m = 32
 
 generator.build(input_shape=[10])
 discriminator.build(input_shape=(28,28))
@@ -104,6 +104,6 @@ for iter in range(iterations):
 
 test_noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
 
-plt.imshow(generator(test_noise_sample))
+plt.imshow(generator(test_noise_sample), cmap="gray")
 #plt.imshow(train_ds[0])
 plt.show()
