@@ -14,7 +14,7 @@ else:
 
 fig = plt.figure(figsize=(10, 7))
 
-do_you = input("Do you want to visualize data?: (yes, no)")
+do_you = input("Do you want to visualize data?: (yes, no): ")
 
 if(do_you == "yes"):
     rows_in = input("Number of rows you want: ")
@@ -83,24 +83,26 @@ disc_loss_fn = train_tools.Discriminator_Loss()
 data_sample = train_ds[0]
 noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
 print("Disc_Loss: ", disc_loss_fn(data_sample=data_sample, noise_sample=noise_sample, discriminator_model=discriminator, generator_model=generator))
-print(f"GAN Training has started.\nDataSet: {data}\nIterations:{iterations} | k: {k} | Batch_size: {k}")
+print(f"\nGAN Training has started...\nDataSet: {data}\nIterations:{iterations} | k: {k} | Batch_size: {k}")
 for iter in range(iterations):
     print(f"[Epoch {iter}]: ")
     for discriminator_step in range(k):
         # m training samples have already been sampled
         print(f"\tDiscriminator Epoch {discriminator_step + 1}:")
         noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
-        for noise_sample, train_sample in zip(noise_ds, train_ds):
-            #print("\tNoise_Sample:", noise_sample.shape, "Train_sample:", train_sample.shape)
-            disc_learn.learn(noise_sample=noise_sample, data_sample=train_sample)
-        #print("Disciminator Loss:", disc_learn.loss)
-        #tf.print(disc_learn.loss)
+        disc_learn.learn(noise_batch=noise_ds, data_batch=train_ds)
+        # for noise_sample, train_sample in zip(noise_ds, train_ds):
+        #     #print("\tNoise_Sample:", noise_sample.shape, "Train_sample:", train_sample.shape)
+        #     disc_learn.learn(noise_sample=noise_sample, data_sample=train_sample)
+        # #print("Disciminator Loss:", disc_learn.loss)
+        # #tf.print(disc_learn.loss)
         
     noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
-    for noise_sample, train_sample in zip(noise_ds, train_ds):
-        gen_learn.learn(noise_sample=noise_sample)
-    #print("Generator Loss:", gen_learn.loss)
-    #tf.print(gen_learn.loss)
+    gen_learn.learn(noise_batch=noise_ds)
+    # for noise_sample, train_sample in zip(noise_ds, train_ds):
+    #     gen_learn.learn(noise_sample=noise_sample)
+    # #print("Generator Loss:", gen_learn.loss)
+    # #tf.print(gen_learn.loss)
 
 test_noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
 
