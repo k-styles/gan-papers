@@ -4,7 +4,7 @@ from discriminator_model import discriminator
 from matplotlib import pyplot as plt
 import logging
 from training_toolkit import train_tools
-#tf.config.run_functions_eagerly(True)
+tf.config.run_functions_eagerly(False)
 
 data = input("What data you want to train on? (mnist, tfd): ")
 if data == "mnist":
@@ -53,17 +53,18 @@ if(do_you == "yes"):
 # print(GAN.summary())
 
 # Training
-generator = generator.Generator(learning_rate=1e-3, epsilon=0.1)
-discriminator = discriminator.Discriminator(learning_rate=1e-5, epsilon=0.1)
-
+generator = generator.Generator(learning_rate=1e-4, epsilon=1e-3, gen_struc=[([250,250], "relu"),([250,250], "relu")], output_activation="sigmoid")
+discriminator = discriminator.Discriminator(learning_rate=1e-4, epsilon=1e-3, gen_struc=[([100,100], "relu"),([400,400], "relu"),([400,400], "relu"),([100,100], "relu")])
+#generator = tf.keras.models.load_model("saved_models/generator_trained")
+#discriminator = tf.keras.models.load_model("saved_models/discriminator_trained")
 #GAN = tf.keras.Model(inputs=input, outputs=outputs)
 
-noise_input_shape = 10
+noise_input_shape = 100
 k = 1
-iterations=1000
-m = 32
+iterations=10000
+m = 100
 
-generator.build(input_shape=[10])
+generator.build(input_shape=[noise_input_shape])
 discriminator.build(input_shape=(28,28))
 
 train_ds = [data_sample for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
@@ -82,10 +83,15 @@ disc_loss_fn = train_tools.Discriminator_Loss()
 
 data_sample = train_ds[0]
 noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
+
+gen_rows = 10
+gen_columns = 10
+test_noise_data = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(gen_rows * gen_columns)]
+
 print("Disc_Loss: ", disc_loss_fn(data_sample=data_sample, noise_sample=noise_sample, discriminator_model=discriminator, generator_model=generator))
-print(f"\nGAN Training has started...\nDataSet: {data}\nIterations:{iterations} | k: {k} | Batch_size: {k}")
+print(f"\nGAN Training has started...\nDataSet: {data}\nIterations:{iterations} | k: {k} | Batch_size: {m}")
 for iter in range(iterations):
-    print(f"[Epoch {iter}]: ")
+    print(f"[Epoch {iter + 1}]: ")
     for discriminator_step in range(k):
         # m training samples have already been sampled
         print(f"\tDiscriminator Epoch {discriminator_step + 1}:")
@@ -103,9 +109,24 @@ for iter in range(iterations):
     #     gen_learn.learn(noise_sample=noise_sample)
     # #print("Generator Loss:", gen_learn.loss)
     # #tf.print(gen_learn.loss)
+    fig_generated = plt.figure(figsize=(10,7))
+    for i in range(gen_rows * gen_columns):
+        fig_generated.add_subplot(gen_rows, gen_columns, i + 1)
+        plt.imshow(generator(test_noise_data[i]), cmap="gray")
+        plt.xticks([])
+        plt.yticks([])
+    fig_generated.savefig(f"generated_images/mnist_{iter}.png")
 
-test_noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
+    print(generator(test_noise_data[0]))
 
-plt.imshow(generator(test_noise_sample), cmap="gray")
-#plt.imshow(train_ds[0])
-plt.show()
+    # Save Models after every 10 iterations
+    if iter % 10 == 0:
+        generator.save("saved_models/generator_trained", save_format="tf")
+        discriminator.save("saved_models/discriminator_trained", save_format="tf")
+    
+    plt.close() # ALWAYS CLOSE
+
+
+# generator = tf.keras.models.load_model('saved_models/generator_trained')
+# discriminator = tf.keras.models.load_model('saved_models/discriminator_trained')
+

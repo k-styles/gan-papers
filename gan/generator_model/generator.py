@@ -18,7 +18,7 @@ class Dense_block(tf.keras.layers.Layer):
         return z
 
 class Output_layer(tf.keras.layers.Layer):
-    def __init__(self, output_shape=(28,28), activation="relu", **kwargs):
+    def __init__(self, output_shape=(28,28), activation="sigmoid", **kwargs):
         super(Output_layer, self).__init__(**kwargs)
         self.activation = tf.keras.activations.get(activation)
         self.output_layer = tf.keras.layers.Dense(output_shape[0] * output_shape[1], activation=self.activation)
@@ -37,7 +37,7 @@ class Output_layer(tf.keras.layers.Layer):
 #     def call(self, input):
 #         return self.output_layer(input)
 class Generator(tf.keras.Model):
-    def __init__(self, gen_struc=[([16,32], "relu"),([16,32], "sigmoid"),([16,32], "relu")], output_activation="relu", output_shape=(28,28), 
+    def __init__(self, gen_struc=[([16,32], "relu"),([16,32], "relu"),([16,32], "relu")], output_activation="relu", output_shape=(28,28), 
                  learning_rate=5e-03, epsilon=0.1, beta_1=0.9, beta_2=0.999, amsgrad=False, name='Adam', **kwargs):
         super(Generator, self).__init__(**kwargs)
         self.dense_blocks = []
@@ -57,7 +57,7 @@ class Generator(tf.keras.Model):
         # Uprank the Input tensor. Need this after tensorflow 2.7
         if input.shape.rank == 1:
             input = tf.expand_dims(input, axis=0)
-
+        
         Z = input
         for block in self.dense_blocks:
             Z = block(Z)
