@@ -53,8 +53,8 @@ if(do_you == "yes"):
 # print(GAN.summary())
 
 # Training
-generator = generator.Generator(learning_rate=1e-4, epsilon=1e-3, gen_struc=[([250,250], "relu"),([250,250], "relu")], output_activation="sigmoid")
-discriminator = discriminator.Discriminator(learning_rate=1e-4, epsilon=1e-3, gen_struc=[([100,100], "relu"),([400,400], "relu"),([400,400], "relu"),([100,100], "relu")])
+generator = generator.Generator(learning_rate=1e-3, epsilon=1e-1, gen_struc=[([250,250], "relu"),([250,250], "relu")], output_activation="relu")
+discriminator = discriminator.Discriminator(learning_rate=1e-3, epsilon=1e-1, gen_struc=[([100,100], "relu"),([400,400], "relu"),([400,400], "relu"),([100,100], "relu")])
 #generator = tf.keras.models.load_model("saved_models/generator_trained")
 #discriminator = tf.keras.models.load_model("saved_models/discriminator_trained")
 #GAN = tf.keras.Model(inputs=input, outputs=outputs)
@@ -124,7 +124,7 @@ for iter in range(iterations):
         generator.save("saved_models/generator_trained", save_format="tf")
         discriminator.save("saved_models/discriminator_trained", save_format="tf")
     
-    plt.close() # ALWAYS CLOSE
+    plt.close(fig_generated) # ALWAYS CLOSE
 
 
 # generator = tf.keras.models.load_model('saved_models/generator_trained')
