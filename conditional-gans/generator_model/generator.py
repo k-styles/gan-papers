@@ -28,16 +28,8 @@ class Output_layer(tf.keras.layers.Layer):
         #print("Input Type Generator: ", type(input))
         return self.output_layer(input)
 
-# class Sigmoid_layer(tf.keras.layers.Layer):
-#     def __init__(self, output_shape=(1,), activation="sigmoid", **kwargs):
-#         super(Sigmoid_layer, self).__init__(**kwargs)
-#         self.activation = tf.keras.activations.get(activation)
-#         self.output_layer = tf.keras.layers.Dense(output_shape[0], activation=self.activation)
-    
-#     def call(self, input):
-#         return self.output_layer(input)
 class Generator(tf.keras.Model):
-    def __init__(self, gen_noise_struc=[([200], "relu")], gen_cond_struc=[([1000], "relu")], gen_body_struc=[([1200, "relu"])] output_activation="relu", output_shape=(28,28), 
+    def __init__(self, gen_noise_struc=[([200], "relu")], gen_cond_struc=[([1000], "relu")], gen_body_struc=[([1200], "relu")], output_activation="relu", output_shape=(28,28), 
                   **kwargs):
         super(Generator, self).__init__(**kwargs)
         self.dense_noise_blocks = []

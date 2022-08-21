@@ -26,35 +26,10 @@ if(do_you == "yes"):
     plt.show()
 
 y_train_hot_encode = tf.one_hot(indices=y_train, depth=10)
-# # Random Input Tensor to generator
-# tf.random.set_seed(5)
-# random_tensor = tf.random.normal(shape=[10], mean=0.0, stddev=1.0)
-# # Build generator
-# generator = generator.Generator()
-# generator.build(input_shape=random_tensor.shape)
-# print(generator.summary())
-
-# # Random Input Tensor to discriminator
-# tf.random.set_seed(5)
-# random_tensor_image = tf.random.normal(shape=[28,28], mean=0.0, stddev=1.0)
-# # Build discriminator
-# discriminator = discriminator.Discriminator()
-# discriminator.build(input_shape=random_tensor_image.shape)
-# print(discriminator.summary())
-
-# inputs = tf.keras.Input(tensor=random_tensor)
-# gen_outputs = generator(inputs)
-# outputs = discriminator(gen_outputs)
-
-# GAN = tf.keras.Model(inputs=inputs, outputs=outputs)
-# print(GAN.summary())
 
 # Training
-generator = generator.Generator(gen_struc=[([250,250], "relu")], output_activation="relu")
-discriminator = discriminator.Discriminator(gen_struc=[([100,100], "relu"),([400,400], "relu")])
-#generator = tf.keras.models.load_model("saved_models/generator_trained")
-#discriminator = tf.keras.models.load_model("saved_models/discriminator_trained")
-#GAN = tf.keras.Model(inputs=input, outputs=outputs)
+generator = generator.Generator(gen_noise_struc=[([200], "relu")], gen_cond_struc=[([1000], "relu")], gen_body_struc=[([1200], "relu")], output_activation="relu", output_shape=(28,28))
+discriminator = discriminator.Discriminator(disc_img_struc=[([240], "relu", 1)], disc_cond_struc=[([50], "relu", 1)], disc_body_struc=[([240], "relu", 1)], output_activation="sigmoid", output_shape=(1,))
 
 noise_input_shape = 100
 k = 1
@@ -64,18 +39,16 @@ m = 100
 generator.build(input_shape=[noise_input_shape])
 discriminator.build(input_shape=(28,28))
 
-train_ds = [data_sample for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
-train_labels_ds = [y for y in y_train_hot_encode]
+train_ds = tf.convert_to_tensor([data_sample for data_sample in x_train])
+train_labels_ds = tf.convert_to_tensor([y for y in y_train_hot_encode])
+
+indices = tf.range(start=0, limit=tf.shape(train_ds)[0], dtype=tf.int32)
+
 
 # Get train tools
 gen_learn = train_tools.Generator_Learn(generator_model=generator, discriminator_model=discriminator, learning_rate=1e-5, epsilon=1e-1, name='Adam')
 disc_learn = train_tools.Discriminator_Learn(generator_model=generator, discriminator_model=discriminator, learning_rate=1e-5, epsilon=1e-1, name='Adam')
 
-# noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
-# # print(generator(noise_sample))
-# plt.imshow(generator(noise_sample))
-# plt.show()        self.optimizer = tf.keras.optimizers.get(identifier=name)
-# print(discriminator(generator(noise_sample)))
 gen_loss_fn = train_tools.Generator_Loss()
 disc_loss_fn = train_tools.Discriminator_Loss()
 
@@ -93,20 +66,17 @@ for iter in range(iterations):
     for discriminator_step in range(k):
         # m training samples have already been sampled
         print(f"\tDiscriminator Epoch {discriminator_step + 1}:")
-        noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
-        disc_learn.learn(noise_batch=noise_ds, data_batch=train_ds)
-        # for noise_sample, train_sample in zip(noise_ds, train_ds):
-        #     #print("\tNoise_Sample:", noise_sample.shape, "Train_sample:", train_sample.shape)
-        #     disc_learn.learn(noise_sample=noise_sample, data_sample=train_sample)
-        # #print("Disciminator Loss:", disc_learn.loss)
-        # #tf.print(disc_learn.loss)
-        
-    noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
-    gen_learn.learn(noise_batch=noise_ds)
-    # for noise_sample, train_sample in zip(noise_ds, train_ds):
-    #     gen_learn.learn(noise_sample=noise_sample)
-    # #print("Generator Loss:", gen_learn.loss)
-    # #tf.print(gen_learn.loss)
+        noise_batch = [tf.random.uniform(shape=[noise_input_shape], minval=0.0, maxval=1.0) for _ in range(m)]
+        shuffled_batch_indices = tf.random.shuffle(indices)[:m]
+        data_batch = tf.gather(train_ds, shuffled_batch_indices)
+        gen_cond_batch = tf.gather(train_labels_ds, shuffled_batch_indices)
+        discr_cond_batch = gen_cond_batch
+
+        disc_learn.learn(noise_batch=noise_batch, data_batch=data_batch, gen_cond_batch=gen_cond_batch, discr_cond_batch=discr_cond_batch)
+    
+    # NOTE: SAMPLING NOISE AGAIN    
+    noise_batch = [tf.random.normal(shape=[noise_input_shape], minval=0.0, maxval=1.0) for _ in range(m)]
+    gen_learn.learn(noise_batch=noise_batch, gen_cond_batch=gen_cond_batch, discr_cond_batch=discr_cond_batch)
     fig_generated = plt.figure(figsize=(10,7))
     for i in range(gen_rows * gen_columns):
         fig_generated.add_subplot(gen_rows, gen_columns, i + 1)
