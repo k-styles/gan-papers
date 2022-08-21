@@ -4,6 +4,7 @@ from discriminator_model import discriminator
 from matplotlib import pyplot as plt
 import logging
 from training_toolkit import train_tools
+import random
 tf.config.run_functions_eagerly(False)
 
 data = input("What data you want to train on? (mnist, tfd): ")
@@ -29,32 +30,10 @@ if(do_you == "yes"):
     plt.show()
 
 
-# # Random Input Tensor to generator
-# tf.random.set_seed(5)
-# random_tensor = tf.random.normal(shape=[10], mean=0.0, stddev=1.0)
-# # Build generator
-# generator = generator.Generator()
-# generator.build(input_shape=random_tensor.shape)
-# print(generator.summary())
-
-# # Random Input Tensor to discriminator
-# tf.random.set_seed(5)
-# random_tensor_image = tf.random.normal(shape=[28,28], mean=0.0, stddev=1.0)
-# # Build discriminator
-# discriminator = discriminator.Discriminator()
-# discriminator.build(input_shape=random_tensor_image.shape)
-# print(discriminator.summary())
-
-# inputs = tf.keras.Input(tensor=random_tensor)
-# gen_outputs = generator(inputs)
-# outputs = discriminator(gen_outputs)
-
-# GAN = tf.keras.Model(inputs=inputs, outputs=outputs)
-# print(GAN.summary())
 
 # Training
-generator = generator.Generator(learning_rate=1e-3, epsilon=1e-1, gen_struc=[([250,250], "relu"),([250,250], "relu")], output_activation="relu")
-discriminator = discriminator.Discriminator(learning_rate=1e-3, epsilon=1e-1, gen_struc=[([100,100], "relu"),([400,400], "relu"),([400,400], "relu"),([100,100], "relu")])
+generator = generator.Generator(learning_rate=2e-4, epsilon=1e-7, beta_1=0.5, gen_struc=[([250,250], "relu"),([250,250], "relu")], output_activation="relu")
+discriminator = discriminator.Discriminator(learning_rate=2e-4, epsilon=1e-7, beta_1=0.5, gen_struc=[([100,100], "relu"),([400,400], "relu"),([400,400], "relu"),([100,100], "relu")])
 #generator = tf.keras.models.load_model("saved_models/generator_trained")
 #discriminator = tf.keras.models.load_model("saved_models/discriminator_trained")
 #GAN = tf.keras.Model(inputs=input, outputs=outputs)
@@ -96,13 +75,10 @@ for iter in range(iterations):
         # m training samples have already been sampled
         print(f"\tDiscriminator Epoch {discriminator_step + 1}:")
         noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
+        random.shuffle(train_ds)
+        train_ds = train_ds[:m]
         disc_learn.learn(noise_batch=noise_ds, data_batch=train_ds)
-        # for noise_sample, train_sample in zip(noise_ds, train_ds):
-        #     #print("\tNoise_Sample:", noise_sample.shape, "Train_sample:", train_sample.shape)
-        #     disc_learn.learn(noise_sample=noise_sample, data_sample=train_sample)
-        # #print("Disciminator Loss:", disc_learn.loss)
-        # #tf.print(disc_learn.loss)
-        
+    
     noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
     gen_learn.learn(noise_batch=noise_ds)
     # for noise_sample, train_sample in zip(noise_ds, train_ds):
