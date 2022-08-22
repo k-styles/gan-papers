@@ -32,21 +32,22 @@ if(do_you == "yes"):
 
 
 # Training
-generator = generator.Generator(learning_rate=2e-4, epsilon=1e-7, beta_1=0.5, gen_struc=[([250,250], "relu"),([250,250], "relu")], output_activation="relu")
-discriminator = discriminator.Discriminator(learning_rate=2e-4, epsilon=1e-7, beta_1=0.5, gen_struc=[([100,100], "relu"),([400,400], "relu"),([400,400], "relu"),([100,100], "relu")])
+generator = generator.Generator(learning_rate=2e-5, epsilon=1e-8, gen_struc=[([500,500], "relu")], output_activation="relu")
+discriminator = discriminator.Discriminator(learning_rate=2e-5, epsilon=1e-8, gen_struc=[([400,400], "relu")])
 #generator = tf.keras.models.load_model("saved_models/generator_trained")
 #discriminator = tf.keras.models.load_model("saved_models/discriminator_trained")
 #GAN = tf.keras.Model(inputs=input, outputs=outputs)
 
 noise_input_shape = 100
-k = 1
+k = 2
 iterations=10000
-m = 100
+m = 32
 
 generator.build(input_shape=[noise_input_shape])
 discriminator.build(input_shape=(28,28))
 
-train_ds = [data_sample for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
+# Adding some noise to the training data
+train_ds = [data_sample + 10 * tf.random.normal(shape=[data_sample.shape[0], data_sample.shape[1]], mean=0.0, stddev=1.0) for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
 
 # Get train tools
 gen_learn = train_tools.Generator_Learn(generator_model=generator, discriminator_model=discriminator)
@@ -65,7 +66,6 @@ noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
 
 gen_rows = 10
 gen_columns = 10
-test_noise_data = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(gen_rows * gen_columns)]
 
 print("Disc_Loss: ", disc_loss_fn(data_sample=data_sample, noise_sample=noise_sample, discriminator_model=discriminator, generator_model=generator))
 print(f"\nGAN Training has started...\nDataSet: {data}\nIterations:{iterations} | k: {k} | Batch_size: {m}")
@@ -86,14 +86,19 @@ for iter in range(iterations):
     # #print("Generator Loss:", gen_learn.loss)
     # #tf.print(gen_learn.loss)
     fig_generated = plt.figure(figsize=(10,7))
+    test_noise_data = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(gen_rows * gen_columns)]
     for i in range(gen_rows * gen_columns):
         fig_generated.add_subplot(gen_rows, gen_columns, i + 1)
         plt.imshow(generator(test_noise_data[i]), cmap="gray")
         plt.xticks([])
         plt.yticks([])
     fig_generated.savefig(f"generated_images/mnist_{iter}.png")
-
-    print(generator(test_noise_data[0]))
+    
+    test_fake = generator(test_noise_data[0])
+    print(test_fake)
+    print("Discriminator Prediction on generator sample: ", discriminator(test_fake))
+    print("Discriminator Prediction on random fake noise samples: ", discriminator(tf.random.normal(shape=[28,28], mean=0.0, stddev=1.0)))
+    print("DIscriminator Prediction on real sample: ", discriminator(train_ds[0]))
 
     # Save Models after every 10 iterations
     if iter % 10 == 0:

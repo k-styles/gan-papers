@@ -3,12 +3,12 @@ import tensorflow as tf
 class Discriminator_Loss(tf.keras.losses.Loss):
     @tf.function
     def __call__(self, noise_sample, data_sample, discriminator_model, generator_model):
-        return -(tf.math.log(discriminator_model(data_sample)) + tf.math.log(1 - discriminator_model(generator_model(noise_sample))))
+        return (tf.math.log(discriminator_model(data_sample)) + tf.math.log(1 - discriminator_model(generator_model(noise_sample))))
 
 class Generator_Loss(tf.keras.losses.Loss):
     @tf.function
     def __call__(self, noise_sample, discriminator_model, generator_model):
-        return -(tf.math.log(discriminator_model(generator_model(noise_sample))))
+        return (tf.math.log(discriminator_model(generator_model(noise_sample))))
 
 class Discriminator_Cost(tf.keras.losses.Loss): 
     @tf.function
@@ -19,7 +19,7 @@ class Discriminator_Cost(tf.keras.losses.Loss):
         for noise_sample, data_sample in zip(noise_batch, data_batch):   # Not optimal
             disc_cost += disc_loss(noise_sample=noise_sample, data_sample=data_sample, 
                                    discriminator_model=discriminator_model, generator_model=generator_model)
-        return (1/m) * disc_cost
+        return -(1/m) * disc_cost
 
 class Generator_Cost(tf.keras.losses.Loss): 
     @tf.function
@@ -30,7 +30,7 @@ class Generator_Cost(tf.keras.losses.Loss):
         for noise_sample in noise_batch:   # Not optimal
             gen_cost += gen_loss(noise_sample=noise_sample, discriminator_model=discriminator_model, 
                                  generator_model=generator_model)
-        return (1/m) * gen_cost
+        return -(1/m) * gen_cost
 
 class Discriminator_Learn:
     def __init__(self, generator_model, discriminator_model):
