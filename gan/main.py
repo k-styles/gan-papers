@@ -32,22 +32,22 @@ if(do_you == "yes"):
 
 
 # Training
-generator = generator.Generator(learning_rate=2e-5, epsilon=1e-8, gen_struc=[([500,500], "relu")], output_activation="relu")
-discriminator = discriminator.Discriminator(learning_rate=2e-5, epsilon=1e-8, gen_struc=[([400,400], "relu")])
+generator = generator.Generator(learning_rate=1e-4, epsilon=1e-8, gen_struc=[([1200,1200], "relu")], output_activation="sigmoid")
+discriminator = discriminator.Discriminator(learning_rate=1e-4, epsilon=1e-8, gen_struc=[([240,240], "relu")])
 #generator = tf.keras.models.load_model("saved_models/generator_trained")
 #discriminator = tf.keras.models.load_model("saved_models/discriminator_trained")
 #GAN = tf.keras.Model(inputs=input, outputs=outputs)
 
 noise_input_shape = 100
 k = 2
-iterations=10000
+iterations=50000
 m = 32
 
 generator.build(input_shape=[noise_input_shape])
 discriminator.build(input_shape=(28,28))
 
 # Adding some noise to the training data
-train_ds = [data_sample + 10 * tf.random.normal(shape=[data_sample.shape[0], data_sample.shape[1]], mean=0.0, stddev=1.0) for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
+train_ds = [data_sample for data_sample in x_train]# + 10 * tf.random.normal(shape=[data_sample.shape[0], data_sample.shape[1]], mean=0.0, stddev=1.0) for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
 
 # Get train tools
 gen_learn = train_tools.Generator_Learn(generator_model=generator, discriminator_model=discriminator)
@@ -62,10 +62,12 @@ gen_loss_fn = train_tools.Generator_Loss()
 disc_loss_fn = train_tools.Discriminator_Loss()
 
 data_sample = train_ds[0]
-noise_sample = tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0)
+noise_sample = tf.random.uniform(shape=[noise_input_shape], minval=0.0, maxval=1.0)
 
 gen_rows = 10
 gen_columns = 10
+
+lr_decay_factor = 1.000004
 
 print("Disc_Loss: ", disc_loss_fn(data_sample=data_sample, noise_sample=noise_sample, discriminator_model=discriminator, generator_model=generator))
 print(f"\nGAN Training has started...\nDataSet: {data}\nIterations:{iterations} | k: {k} | Batch_size: {m}")
@@ -74,19 +76,19 @@ for iter in range(iterations):
     for discriminator_step in range(k):
         # m training samples have already been sampled
         print(f"\tDiscriminator Epoch {discriminator_step + 1}:")
-        noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
+        noise_ds = [tf.random.uniform(shape=[noise_input_shape], minval=0.0, maxval=1.0) for _ in range(m)]
         random.shuffle(train_ds)
         train_ds = train_ds[:m]
         disc_learn.learn(noise_batch=noise_ds, data_batch=train_ds)
     
-    noise_ds = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(m)]
+    noise_ds = [tf.random.uniform(shape=[noise_input_shape], minval=0.0, maxval=1.0) for _ in range(m)]
     gen_learn.learn(noise_batch=noise_ds)
     # for noise_sample, train_sample in zip(noise_ds, train_ds):
     #     gen_learn.learn(noise_sample=noise_sample)
     # #print("Generator Loss:", gen_learn.loss)
     # #tf.print(gen_learn.loss)
     fig_generated = plt.figure(figsize=(10,7))
-    test_noise_data = [tf.random.normal(shape=[noise_input_shape], mean=0.0, stddev=1.0) for _ in range(gen_rows * gen_columns)]
+    test_noise_data = [tf.random.uniform(shape=[noise_input_shape], minval=0.0, maxval=1.0) for _ in range(gen_rows * gen_columns)]
     for i in range(gen_rows * gen_columns):
         fig_generated.add_subplot(gen_rows, gen_columns, i + 1)
         plt.imshow(generator(test_noise_data[i]), cmap="gray")
@@ -97,8 +99,14 @@ for iter in range(iterations):
     test_fake = generator(test_noise_data[0])
     print(test_fake)
     print("Discriminator Prediction on generator sample: ", discriminator(test_fake))
-    print("Discriminator Prediction on random fake noise samples: ", discriminator(tf.random.normal(shape=[28,28], mean=0.0, stddev=1.0)))
+    print("Discriminator Prediction on random fake noise samples: ", discriminator(tf.random.uniform(shape=[28,28], minval=0.0, maxval=1.0)))
     print("DIscriminator Prediction on real sample: ", discriminator(train_ds[0]))
+
+    # Decay learning rate
+    if discriminator.discr_learning_rate >= 0.000000001:
+        discriminator.discr_learning_rate = discriminator.discr_learning_rate / lr_decay_factor
+        generator.gen_learning_rate = discriminator.discr_learning_rate
+
 
     # Save Models after every 10 iterations
     if iter % 10 == 0:
