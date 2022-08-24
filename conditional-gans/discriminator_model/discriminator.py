@@ -58,13 +58,15 @@ class Discriminator(tf.keras.Model):
 
     #Input as a tensor only
     @tf.function
-    def call(self, input_img, input_cond):
+    def call(self, inputs):
         # Sample random vector
         #tf.random.set_seed(5)
         #input_vector = tf.random.normal(shape=[input_shape], mean=0.0, stddev=1.0)
         
         # Uprank the Input tensor. Need this after tensorflow 2.7
         # The first element in Input is number of samples. To flatten, this code provides 1 at axis 0
+        input_img = inputs[0]
+        input_cond = inputs[1]
         if input_img.shape.rank == 2:
             input_img = tf.expand_dims(input_img, axis=0)
         if input_cond.shape.rank == 1:

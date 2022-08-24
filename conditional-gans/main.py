@@ -25,7 +25,6 @@ if(do_you == "yes"):
 
     plt.show()
 
-y_train_hot_encode = tf.one_hot(indices=y_train, depth=10)
 
 # Training
 generator = generator.Generator(gen_noise_struc=[([200], "relu")], gen_cond_struc=[([1000], "relu")], gen_body_struc=[([1200], "relu")], output_activation="relu", output_shape=(28,28))
@@ -36,9 +35,10 @@ k = 1
 iterations=10000
 m = 100
 
-generator.build(input_shape=[noise_input_shape])
-discriminator.build(input_shape=(28,28))
+#generator.build(input_shape=[noise_input_shape])
+#discriminator.build(input_shape=(28,28))
 
+y_train_hot_encode = tf.one_hot(indices=y_train, depth=10)
 train_ds = tf.convert_to_tensor([data_sample for data_sample in x_train])
 train_labels_ds = tf.convert_to_tensor([y for y in y_train_hot_encode])
 
@@ -80,12 +80,12 @@ for iter in range(iterations):
     fig_generated = plt.figure(figsize=(10,7))
     for i in range(gen_rows * gen_columns):
         fig_generated.add_subplot(gen_rows, gen_columns, i + 1)
-        plt.imshow(generator(test_noise_data[i]), cmap="gray")
+        plt.imshow(generator(test_noise_data[i], tf.one_hot(indices=i%10, depth=10)), cmap="gray")
         plt.xticks([])
         plt.yticks([])
     fig_generated.savefig(f"generated_images/mnist_{iter}.png")
 
-    print(generator(test_noise_data[0]))
+    print(generator(inputs=[test_noise_data[0], [1,0,0,0,0,0,0,0,0,0]]))
 
     # Save Models after every 10 iterations
     if iter % 10 == 0:

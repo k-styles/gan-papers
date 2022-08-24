@@ -46,12 +46,14 @@ class Generator(tf.keras.Model):
         self.out_shape = output_shape
     
     @tf.function
-    def call(self, input_noise, input_cond):
+    def call(self, inputs):
         # Sample random vector
         #tf.random.set_seed(5)
         #input_vector = tf.random.normal(shape=[input_shape], mean=0.0, stddev=1.0)
         
         # Uprank the Input tensor. Need this after tensorflow 2.7
+        input_noise = inputs[0]
+        input_cond = inputs[1]
         if input_noise.shape.rank == 1:
             input_noise = tf.expand_dims(input_noise, axis=0)
         if input_cond.shape.rank == 1:
