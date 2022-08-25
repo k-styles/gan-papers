@@ -3,12 +3,12 @@ import tensorflow as tf
 class Discriminator_Loss(tf.keras.losses.Loss):
     @tf.function
     def __call__(self, noise_sample, data_sample, discriminator_model, generator_model):
-        return (tf.math.log(discriminator_model(data_sample)) + tf.math.log(1 - discriminator_model(generator_model(noise_sample))))
+        return (tf.math.log(discriminator_model(data_sample) + 1e-30) + tf.math.log(1 - discriminator_model(generator_model(noise_sample))) + 1e-30)
 
 class Generator_Loss(tf.keras.losses.Loss):
     @tf.function
     def __call__(self, noise_sample, discriminator_model, generator_model):
-        return (tf.math.log(discriminator_model(generator_model(noise_sample))))
+        return (tf.math.log(discriminator_model(generator_model(noise_sample)) + 1e-30))
 
 class Discriminator_Cost(tf.keras.losses.Loss): 
     @tf.function
