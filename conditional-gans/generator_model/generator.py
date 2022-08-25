@@ -36,13 +36,13 @@ class Generator(tf.keras.Model):
         self.dense_cond_blocks = []
         self.dense_body_blocks = []
         self.output_activation = tf.keras.activations.get(output_activation)
-        for dense_count, activation in gen_noise_struc:
-            self.dense_noise_blocks.append(Dense_block(dense_count=dense_count, activation=activation))
-        for dense_count, activation in gen_cond_struc:
-            self.dense_cond_blocks.append(Dense_block(dense_count=dense_count, activation=activation))
-        for dense_count, activation in gen_body_struc:
-            self.dense_body_blocks.append(Dense_block(dense_count=dense_count, activation=activation))
-        self.output_layer = Output_layer(output_shape=output_shape, activation=output_activation)
+        for i, (dense_count, activation) in enumerate(gen_noise_struc):
+            self.dense_noise_blocks.append(Dense_block(dense_count=dense_count, activation=activation, name=f"Noise_dense_block{i}"))
+        for i, (dense_count, activation) in enumerate(gen_cond_struc):
+            self.dense_cond_blocks.append(Dense_block(dense_count=dense_count, activation=activation, name=f"Conditional_dense_block{i}"))
+        for i, (dense_count, activation) in enumerate(gen_body_struc):
+            self.dense_body_blocks.append(Dense_block(dense_count=dense_count, activation=activation, name=f"Body_dense_block{i}"))
+        self.output_layer = Output_layer(output_shape=output_shape, activation=output_activation, name=f"Generator_output_layer")
         self.out_shape = output_shape
     
     @tf.function

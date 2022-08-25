@@ -2,19 +2,19 @@ import tensorflow as tf
 
 class Discriminator_Loss(tf.keras.losses.Loss):
     @tf.function
-    def __call__(self, noise_sample, data_sample, gen_cond_sample, discr_cond_batch, discriminator_model, generator_model):
-        discr_inputs_real = [data_sample, discr_cond_batch]
-        gen_inputs = [noise_sample, gen_cond_batch]
-        discr_inputs_fake = [generator_model(gen_inputs), discr_cond_batch]
+    def __call__(self, noise_sample, data_sample, gen_cond_sample, discr_cond_sample, discriminator_model, generator_model):
+        discr_inputs_real = [data_sample, discr_cond_sample]
+        gen_inputs = [noise_sample, gen_cond_sample]
+        discr_inputs_fake = [generator_model(gen_inputs), discr_cond_sample]
 
-        return  tf.math.log(discriminator_model(inputs=discr_inputs)) + tf.math.log(1 - discriminator_model(inputs=[generator_model(gen_inputs), discr_cond_batch]))
+        return  tf.math.log(discriminator_model(inputs=discr_inputs)) + tf.math.log(1 - discriminator_model(inputs=[generator_model(gen_inputs), discr_cond_sample]))
 
 class Generator_Loss(tf.keras.losses.Loss):
     @tf.function
-    def __call__(self, noise_sample, gen_cond_sample, discr_cond_batch, discriminator_model, generator_model):
-        gen_inputs = [noise_sample, gen_cond_batch]
-        discr_inputs_fake = [generator_model(gen_inputs), discr_cond_batch]
-        return tf.math.log(discriminator_model(inputs=[generator_model(gen_inputs), discr_cond_batch]))
+    def __call__(self, noise_sample, gen_cond_sample, discr_cond_sample, discriminator_model, generator_model):
+        gen_inputs = [noise_sample, gen_cond_sample]
+        discr_inputs_fake = [generator_model(gen_inputs), discr_cond_sample]
+        return tf.math.log(discriminator_model(inputs=[generator_model(gen_inputs), discr_cond_sample]))
 
 class Discriminator_Cost(tf.keras.losses.Loss): 
     @tf.function
@@ -27,9 +27,9 @@ class Discriminator_Cost(tf.keras.losses.Loss):
         data_batch = tf.unstack(data_batch)
         gen_cond_batch = tf.unstack(gen_cond_batch)
         discr_cond_batch = tf.unstack(discr_cond_batch)
-        for noise_sample, data_sample, gen_cond_sample, discr_cond_batch in zip(noise_batch, data_batch, gen_cond_batch, discr_cond_batch):   # Not optimal
+        for noise_sample, data_sample, gen_cond_sample, discr_cond_sample in zip(noise_batch, data_batch, gen_cond_batch, discr_cond_batch):   # Not optimal
             disc_cost += disc_loss(noise_sample=noise_sample, data_sample=data_sample, gen_cond_sample=gen_cond_sample, 
-                                   discr_cond_batch=discr_cond_batch, discriminator_model=discriminator_model, generator_model=generator_model)
+                                   discr_cond_sample=discr_cond_sample, discriminator_model=discriminator_model, generator_model=generator_model)
         return -(1/m) * disc_cost
 
 class Generator_Cost(tf.keras.losses.Loss): 
@@ -42,13 +42,13 @@ class Generator_Cost(tf.keras.losses.Loss):
         noise_batch = tf.unstack(noise_batch)
         gen_cond_batch = tf.unstack(gen_cond_batch)
         discr_cond_batch = tf.unstack(discr_cond_batch)
-        for noise_sample, gen_cond_sample, discr_cond_batch in zip(noise_batch, gen_cond_batch, discr_cond_batch):   # Not optimal
+        for noise_sample, gen_cond_sample, discr_cond_sample in zip(noise_batch, gen_cond_batch, discr_cond_batch):   # Not optimal
             gen_cost += gen_loss(noise_sample=noise_sample, gen_cond_sample=gen_cond_sample, 
-                                 discr_cond_batch=discr_cond_batch, discriminator_model=discriminator_model, generator_model=generator_model)
+                                 discr_cond_batch=discr_cond_sample, discriminator_model=discriminator_model, generator_model=generator_model)
         return -(1/m) * gen_cost
 
 class Discriminator_Learn:
-    def __init__(self, generator_model, discriminator_model, learning_rate=5e-03, epsilon=0.1, beta_1=0.9, beta_2=0.999, amsgrad=False, name='adam'):
+    def __init__(self, generator_model, discriminator_model, learning_rate=5e-03, epsilon=0.1, beta_1=0.9, beta_2=0.999, amsgrad=False):
         self.generator_model = generator_model
         self.discriminator_model = discriminator_model
         self.batch_loss = None
@@ -58,7 +58,7 @@ class Discriminator_Learn:
         self.beta_2 = beta_2
         self.amsgrad = amsgrad
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate, epsilon=self.epsilon, 
-                                                  beta_1=self.beta_1, beta_2=self.beta_2, amsgrad=self.amdsgrad)
+                                                  beta_1=self.beta_1, beta_2=self.beta_2, amsgrad=self.amsgrad)
 
     @tf.function
     def learn(self, noise_batch, data_batch, gen_cond_batch, discr_cond_batch):
@@ -110,7 +110,7 @@ class Generator_Learn:
         self.beta_2 = beta_2
         self.amsgrad = amsgrad
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate, epsilon=self.epsilon, 
-                                                  beta_1=self.beta_1, beta_2=self.beta_2, amsgrad=self.amdsgrad)
+                                                  beta_1=self.beta_1, beta_2=self.beta_2, amsgrad=self.amsgrad)
 
     @tf.function
     def learn(self, noise_batch, gen_cond_batch, discr_cond_batch):

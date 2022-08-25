@@ -35,8 +35,6 @@ k = 1
 iterations=10000
 m = 100
 
-#generator.build(input_shape=[noise_input_shape])
-#discriminator.build(input_shape=(28,28))
 
 y_train_hot_encode = tf.one_hot(indices=y_train, depth=10)
 train_ds = tf.convert_to_tensor([data_sample for data_sample in x_train])
@@ -44,10 +42,12 @@ train_labels_ds = tf.convert_to_tensor([y for y in y_train_hot_encode])
 
 indices = tf.range(start=0, limit=tf.shape(train_ds)[0], dtype=tf.int32)
 
+generator.build(input_shape=[noise_input_shape, len(y_train_hot_encode[0])])
+discriminator.build(input_shape=[(28,28), len(y_train_hot_encode[0])])
 
 # Get train tools
-gen_learn = train_tools.Generator_Learn(generator_model=generator, discriminator_model=discriminator, learning_rate=1e-5, epsilon=1e-1, name='Adam')
-disc_learn = train_tools.Discriminator_Learn(generator_model=generator, discriminator_model=discriminator, learning_rate=1e-5, epsilon=1e-1, name='Adam')
+gen_learn = train_tools.Generator_Learn(generator_model=generator, discriminator_model=discriminator, learning_rate=1e-5, epsilon=1e-1)
+disc_learn = train_tools.Discriminator_Learn(generator_model=generator, discriminator_model=discriminator, learning_rate=1e-5, epsilon=1e-1)
 
 gen_loss_fn = train_tools.Generator_Loss()
 disc_loss_fn = train_tools.Discriminator_Loss()
@@ -59,8 +59,7 @@ gen_rows = 10
 gen_columns = 10
 test_noise_data = [tf.random.uniform(shape=[noise_input_shape], minval=0.0, maxval=1.0) for _ in range(gen_rows * gen_columns)]
 
-print("Disc_Loss: ", disc_loss_fn(data_sample=data_sample, noise_sample=noise_sample, discriminator_model=discriminator, generator_model=generator))
-print(f"\nGAN Training has started...\nDataSet: {data}\nIterations:{iterations} | k: {k} | Batch_size: {m}")
+print(f"\nGAN Training has started...\nDataSet: mnist\nIterations:{iterations} | k: {k} | Batch_size: {m}")
 for iter in range(iterations):
     print(f"[Epoch {iter + 1}]: ")
     for discriminator_step in range(k):

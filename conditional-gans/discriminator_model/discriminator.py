@@ -16,7 +16,7 @@ class Dense_block(tf.keras.layers.Layer):
             self.activation = tf.keras.activations.get(activation)
             for i, num in enumerate(dense_count):
                 # MaxPooling will be performed at the last axis (axis=-1)
-                self.layers.append(tf.keras.layers.Dense(num, activation=self.activation, name=f"discrim_dense_{i}"))
+                self.layers.append(tf.keras.layers.Dense(num, activation=self.activation, name=f"discrim_dense{i}"))
                 self.layers.append(tfa.layers.Maxout(num))  
         else:
             print("[Discriminator Error]: Invalid value for maxout")
@@ -48,13 +48,13 @@ class Discriminator(tf.keras.Model):
         self.dense_body_blocks = []
         self.flatten_layer = tf.keras.layers.Flatten()
         #self.discr_variables = []
-        for dense_count, activation, maxout in disc_img_struc:
-            self.dense_img_blocks.append(Dense_block(dense_count=dense_count, activation=activation, maxout=maxout))
-        for dense_count, activation, maxout in disc_cond_struc:
-            self.dense_cond_blocks.append(Dense_block(dense_count=dense_count, activation=activation, maxout=maxout))
-        for dense_count, activation, maxout in disc_body_struc:
-            self.dense_body_blocks.append(Dense_block(dense_count=dense_count, activation=activation, maxout=maxout))
-        self.out_sigmoid_layer = Sigmoid_layer(output_shape=output_shape, activation=output_activation)
+        for i, (dense_count, activation, maxout) in enumerate(disc_img_struc):
+            self.dense_img_blocks.append(Dense_block(dense_count=dense_count, activation=activation, maxout=maxout, name=f"Image_dense_block{i}"))
+        for i, (dense_count, activation, maxout) in enumerate(disc_cond_struc):
+            self.dense_cond_blocks.append(Dense_block(dense_count=dense_count, activation=activation, maxout=maxout, name=f"Conditional_dense_block{i}"))
+        for i, (dense_count, activation, maxout) in enumerate(disc_body_struc):
+            self.dense_body_blocks.append(Dense_block(dense_count=dense_count, activation=activation, maxout=maxout, name=f"Body_dense_block{i}"))
+        self.out_sigmoid_layer = Sigmoid_layer(output_shape=output_shape, activation=output_activation, name=f"Sigmoid_Layer")
 
     #Input as a tensor only
     @tf.function
@@ -75,7 +75,7 @@ class Discriminator(tf.keras.Model):
         Z = self.flatten_layer(input_img)
         Y = input_cond
         
-        for block in self.dense_noise_blocks:
+        for block in self.dense_img_blocks:
             Z = block(Z)
         
         for block in self.dense_cond_blocks:
