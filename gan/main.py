@@ -32,8 +32,8 @@ if(do_you == "yes"):
 
 
 # Training
-generator = generator.Generator(learning_rate=1e-4, epsilon=1e-8, beta_1=0.0, beta_2=0.9, gen_struc=[([1200,1200], "relu")], output_activation="sigmoid")
-discriminator = discriminator.Discriminator(learning_rate=4e-4, epsilon=1e-8, beta_1=0.0, beta_2=0.9, gen_struc=[([240,240], "relu")])
+generator = generator.Generator(learning_rate=4e-4, epsilon=1e-8, beta_1=0.0, beta_2=0.9, gen_struc=[([1200,1200], "relu")], output_activation="sigmoid")
+discriminator = discriminator.Discriminator(learning_rate=8e-4, epsilon=1e-8, beta_1=0.0, beta_2=0.9, gen_struc=[([240,240], "relu")])
 #generator = tf.keras.models.load_model("saved_models/generator_trained")
 #discriminator = tf.keras.models.load_model("saved_models/discriminator_trained")
 #GAN = tf.keras.Model(inputs=input, outputs=outputs)
@@ -41,13 +41,13 @@ discriminator = discriminator.Discriminator(learning_rate=4e-4, epsilon=1e-8, be
 noise_input_shape = 100
 k = 1
 iterations=50000
-m = 100
+m = 64
 
 generator.build(input_shape=[noise_input_shape])
 discriminator.build(input_shape=(28,28))
 
-# Adding some noise to the training data
-train_ds = [data_sample for data_sample in x_train]# + 10 * tf.random.normal(shape=[data_sample.shape[0], data_sample.shape[1]], mean=0.0, stddev=1.0) for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
+# Normalizing data
+train_ds = [tf.keras.utils.normalize(data_sample) for data_sample in x_train]# + 10 * tf.random.normal(shape=[data_sample.shape[0], data_sample.shape[1]], mean=0.0, stddev=1.0) for data_sample in x_train]#tf.data.Dataset.from_tensor_slices(x_train).shuffle(10000).batch(m)
 
 # Get train tools
 gen_learn = train_tools.Generator_Learn(generator_model=generator, discriminator_model=discriminator)
@@ -65,7 +65,7 @@ gen_rows = 10
 gen_columns = 10
 
 lr_decay_factor = 1.000004
-
+print("Before: ", discriminator(train_ds[0]))
 print(f"\nGAN Training has started...\nDataSet: {data}\nIterations:{iterations} | k: {k} | Batch_size: {m}")
 for iter in range(iterations):
     print(f"[Epoch {iter + 1}]: generator_lr: {generator.gen_learning_rate} | discriminator_lr: {discriminator.discr_learning_rate}")
@@ -108,9 +108,8 @@ for iter in range(iterations):
 
     # Save Models after every 10 iterations
     if iter % 10 == 0:
-        generator.save_weights("saved_models/generator_trained", save_format="tf")
-        discriminator.save_weights("saved_models/discriminator_trained", save_format="tf")
-    print("Hey: ", discriminator(tf.random.uniform(shape=(28,28))))
+        generator.save_weights("saved_models/generator_trained/generator_trained", save_format="tf")
+        discriminator.save_weights("saved_models/discriminator_trained/discriminator_trained", save_format="tf")
     
     plt.close(fig_generated) # ALWAYS CLOSE
 
