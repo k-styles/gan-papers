@@ -7,7 +7,7 @@ class Discriminator_Loss(tf.keras.losses.Loss):
         gen_inputs = [noise_sample, gen_cond_sample]
         discr_inputs_fake = [generator_model(gen_inputs), discr_cond_sample]
 
-        return  tf.math.log(discriminator_model(inputs=discr_inputs)) + tf.math.log(1 - discriminator_model(inputs=[generator_model(gen_inputs), discr_cond_sample]))
+        return tf.math.log(discriminator_model(inputs=discr_inputs)) + tf.math.log(1 - discriminator_model(inputs=[generator_model(gen_inputs), discr_cond_sample]))
 
 class Generator_Loss(tf.keras.losses.Loss):
     @tf.function

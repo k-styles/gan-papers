@@ -20,7 +20,14 @@ gen_columns = 10
 #     plt.imshow(loaded_gen(input=test_noise_sample), cmap="gray")
 #     plt.show()
 test_noise_sample = tf.random.uniform(shape=[100], minval=0.0, maxval=1.0)
-print(loaded_discr(x_train[0]))#loaded_gen(test_noise_sample)))
+incorrect = 0
+total = 0
+for _, img in enumerate(x_train):
+    if loaded_discr(img) < 0.5:
+        incorrect += 1
+    total += 1
+print("Frequentist Loss on real images: ", incorrect / total)
+#loaded_gen(test_noise_sample)))
 # for i in range(gen_rows * gen_columns):
 #     fig_generated.add_subplot(gen_rows, gen_columns, i + 1)
 #     plt.imshow(generator(test_noise_data[i]), cmap="gray")
