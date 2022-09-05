@@ -44,21 +44,23 @@ class Discriminator_Learn:
         discr_cost_fn = Discriminator_Cost()
         with tf.GradientTape(persistent=False, watch_accessed_variables=False) as tape:
             # Capture Variables
-            for block in self.discriminator_model.dense_blocks:
-                for layer in block.layers:
-                    if len(layer.variables)!=0:
-                        tape.watch(layer.variables)
-                        discr_variables.append(layer.variables[0])
-                        discr_variables.append(layer.variables[1])
-            tape.watch(self.discriminator_model.out_sigmoid_layer.variables)
-            discr_variables.append(self.discriminator_model.out_sigmoid_layer.variables[0])
-            discr_variables.append(self.discriminator_model.out_sigmoid_layer.variables[1])
-            self.batch_loss = discr_cost_fn(noise_batch=noise_batch, data_batch=data_batch, 
-                              generator_model=self.generator_model, discriminator_model=self.discriminator_model)
-        grads = tape.gradient(self.batch_loss, discr_variables)
+            # for block in self.discriminator_model.dense_blocks:
+            #     for layer in block.layers:
+            #         if len(layer.variables)!=0:
+            #             tape.watch(layer.variables)
+            #             discr_variables.append(layer.variables[0])
+            #             discr_variables.append(layer.variables[1])
+            # tape.watch(self.discriminator_model.out_sigmoid_layer.variables[0])
+            # tape.watch(self.discriminator_model.out_sigmoid_layer.variables[1])
+            # discr_variables.append(self.discriminator_model.out_sigmoid_layer.variables[0])
+            # discr_variables.append(self.discriminator_model.out_sigmoid_layer.variables[1])
+            # self.batch_loss = discr_cost_fn(noise_batch=noise_batch, data_batch=data_batch, 
+            #                   generator_model=self.generator_model, discriminator_model=self.discriminator_model)
+            tape.watch(self.discriminator_model.trainable_variables)
+        grads = tape.gradient(self.batch_loss, self.discriminator_model.trainable_variables)
         tf.print("Discriminator Batch Loss: ", self.batch_loss)
         del tape
-        self.discriminator_model.optimizer.apply_gradients(zip(grads, discr_variables))
+        self.discriminator_model.optimizer.apply_gradients(zip(grads, self.discriminator_model.trainable_variables))
         return grads
 
 
@@ -73,20 +75,23 @@ class Generator_Learn:
         gen_variables = []
         gen_cost_fn = Generator_Cost()
         with tf.GradientTape(persistent=False, watch_accessed_variables=False) as tape:
-            # Capture Variables
-            for block in self.generator_model.dense_blocks:
-                for layer in block.layers:
-                    if len(layer.variables)!=0:
-                        tape.watch(layer.variables)
-                        gen_variables.append(layer.variables[0])
-                        gen_variables.append(layer.variables[1])
-            tape.watch(self.generator_model.output_layer.variables)
-            gen_variables.append(self.generator_model.output_layer.variables[0])
-            gen_variables.append(self.generator_model.output_layer.variables[1])
-            self.batch_loss = gen_cost_fn(noise_batch=noise_batch, generator_model=self.generator_model, 
-                                          discriminator_model=self.discriminator_model)
-        grads = tape.gradient(self.batch_loss, gen_variables)
+        #     # Capture Variables
+        #     for block in self.generator_model.dense_blocks:
+        #         for layer in block.layers:
+        #             if len(layer.variables)!=0:
+        #                 tape.watch(layer.variables)
+        #                 gen_variables.append(layer.variables[0])
+        #                 gen_variables.append(layer.variables[1])
+        #     tape.watch(self.generator_model.output_layer.variables[0])
+        #     tape.watch(self.generator_model.output_layer.variables[1])
+        #     gen_variables.append(self.generator_model.output_layer.variables[0])
+        #     gen_variables.append(self.generator_model.output_layer.variables[1])
+        #     self.batch_loss = gen_cost_fn(noise_batch=noise_batch, generator_model=self.generator_model, 
+        #                                   discriminator_model=self.discriminator_model)
+        # print("Variables: ", gen_variables, " || Number of Variables: ", len(gen_variables))
+            tape.watch(self.generator_model.learnable_variables)
+        grads = tape.gradient(self.batch_loss, self.generator_model.trainable_variables)
         tf.print("Generator Batch Loss: ", self.batch_loss)
         del tape
-        self.generator_model.optimizer.apply_gradients(zip(grads, gen_variables))
+        self.generator_model.optimizer.apply_gradients(zip(grads, self.generator_model.trainable_variables))
         return grads

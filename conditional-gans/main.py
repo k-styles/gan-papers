@@ -42,8 +42,8 @@ train_labels_ds = tf.convert_to_tensor([y for y in y_train_hot_encode])
 
 indices = tf.range(start=0, limit=tf.shape(train_ds)[0], dtype=tf.int32)
 
-generator.build(input_shape=[noise_input_shape, len(y_train_hot_encode[0])])
-discriminator.build(input_shape=[(28,28), len(y_train_hot_encode[0])])
+#generator.build(input_shape=[noise_input_shape, len(y_train_hot_encode[1])])
+#discriminator.build(input_shape=[(uniform,28), len(y_train_hot_encode[0])])
 
 # Get train tools
 gen_learn = train_tools.Generator_Learn(generator_model=generator, discriminator_model=discriminator, learning_rate=1e-5, epsilon=1e-1)
@@ -74,12 +74,12 @@ for iter in range(iterations):
         disc_learn.learn(noise_batch=noise_batch, data_batch=data_batch, gen_cond_batch=gen_cond_batch, discr_cond_batch=discr_cond_batch)
     
     # NOTE: SAMPLING NOISE AGAIN    
-    noise_batch = [tf.random.normal(shape=[noise_input_shape], minval=0.0, maxval=1.0) for _ in range(m)]
+    noise_batch = [tf.random.uniform(shape=[noise_input_shape], minval=0.0, maxval=1.0) for _ in range(m)]
     gen_learn.learn(noise_batch=noise_batch, gen_cond_batch=gen_cond_batch, discr_cond_batch=discr_cond_batch)
     fig_generated = plt.figure(figsize=(10,7))
     for i in range(gen_rows * gen_columns):
         fig_generated.add_subplot(gen_rows, gen_columns, i + 1)
-        plt.imshow(generator(test_noise_data[i], tf.one_hot(indices=i%10, depth=10)), cmap="gray")
+        plt.imshow(generator([test_noise_data[i], tf.one_hot(indices=i%10, depth=10)]), cmap="gray")
         plt.xticks([])
         plt.yticks([])
     fig_generated.savefig(f"generated_images/mnist_{iter}.png")

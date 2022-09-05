@@ -56,8 +56,9 @@ class Generator(tf.keras.Model):
         input_cond = inputs[1]
         if input_noise.shape.rank == 1:
             input_noise = tf.expand_dims(input_noise, axis=0)
-        if input_cond.shape.rank == 1:
-            input_cond = tf.expand_dims(input_cond, axis=0)       
+        if type(input_cond) == "list":
+            input_cond = tf.convert_to_tensor(input_cond)
+        input_cond = tf.expand_dims(input_cond, axis=0)       
         
         Z = input_noise
         Y = input_cond
