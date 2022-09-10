@@ -57,6 +57,7 @@ class Discriminator_Learn:
             # self.batch_loss = discr_cost_fn(noise_batch=noise_batch, data_batch=data_batch, 
             #                   generator_model=self.generator_model, discriminator_model=self.discriminator_model)
             tape.watch(self.discriminator_model.trainable_variables)
+            self.batch_loss = discr_cost_fn(noise_batch=noise_batch, data_batch=data_batch, discriminator_model=self.discriminator_model, generator_model=self.generator_model)
         grads = tape.gradient(self.batch_loss, self.discriminator_model.trainable_variables)
         tf.print("Discriminator Batch Loss: ", self.batch_loss)
         del tape
@@ -89,7 +90,8 @@ class Generator_Learn:
         #     self.batch_loss = gen_cost_fn(noise_batch=noise_batch, generator_model=self.generator_model, 
         #                                   discriminator_model=self.discriminator_model)
         # print("Variables: ", gen_variables, " || Number of Variables: ", len(gen_variables))
-            tape.watch(self.generator_model.learnable_variables)
+            tape.watch(self.generator_model.trainable_variables)
+            self.batch_loss = gen_cost_fn(noise_batch=noise_batch, discriminator_model=self.discriminator_model, generator_model=self.generator_model)
         grads = tape.gradient(self.batch_loss, self.generator_model.trainable_variables)
         tf.print("Generator Batch Loss: ", self.batch_loss)
         del tape
