@@ -7,7 +7,7 @@ class Discriminator_Loss(tf.keras.losses.Loss):
         gen_inputs = [noise_sample, gen_cond_sample]
         discr_inputs_fake = [generator_model(gen_inputs), discr_cond_sample]
 
-        return tf.math.log(discriminator_model(inputs=discr_inputs_real)) + tf.math.log(1 - discriminator_model(inputs=[generator_model(gen_inputs), discr_cond_sample]))
+        return tf.math.log(discriminator_model(inputs=discr_inputs_real) + 1e-30) + tf.math.log(1 + 1e-30 - discriminator_model(inputs=[generator_model(gen_inputs), discr_cond_sample]))
 
 class Generator_Loss(tf.keras.losses.Loss):
     @tf.function
@@ -98,7 +98,6 @@ class Discriminator_Learn:
         grads = tape.gradient(self.batch_loss, self.discriminator_model.trainable_variables)
         tf.print("Discriminator Batch Loss: ", self.batch_loss)
         del tape
-        print(grads)
         self.optimizer.apply_gradients(zip(grads, self.discriminator_model.trainable_variables))
         return grads
 
@@ -129,7 +128,7 @@ class Generator_Learn:
             #             discr_variables.append(layer.variables[0])
             #             discr_variables.append(layer.variables[1])
             
-            # for block in self.discriminator_model.dense_cond_blocks:
+             #for block in self.discriminator_model.dense_cond_blocks:
             #     for layer in block.layers:
             #         if len(layer.variables)!=0:
             #             tape.watch(layer.variables)

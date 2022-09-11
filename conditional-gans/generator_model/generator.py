@@ -29,7 +29,7 @@ class Output_layer(tf.keras.layers.Layer):
         return self.output_layer(input)
 
 class Generator(tf.keras.Model):
-    def __init__(self, gen_noise_struc=[([200], "relu")], gen_cond_struc=[([1000], "relu")], gen_body_struc=[([1200], "relu")], output_activation="relu", output_shape=(28,28), 
+    def __init__(self, gen_noise_struc=[([200], "relu")], gen_cond_struc=[([1000], "relu")], gen_body_struc=[([1200], "relu")], output_activation="sigmoid", output_shape=(28,28), 
                   **kwargs):
         super(Generator, self).__init__(**kwargs)
         self.dense_noise_blocks = []
