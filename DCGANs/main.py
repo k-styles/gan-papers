@@ -4,10 +4,16 @@ from discriminator_model import discriminator
 from matplotlib import pyplot as plt
 import logging
 from training_toolkit import train_tools
+import tensorflow_datasets.public_api as tfds
+
 tf.config.run_functions_eagerly(False)
 
-print("Using mnist dataset...")
-(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+data = input("What data you want to train on? (LSUN, Imagenet-1k): ")
+if data == "LSUN":
+    #TODO: Load LSUN Dataset
+    #(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+else:
+    logging.error(f"Not yet implemented for {data}. This should be either reported or feel free to make a pull request.")
 
 fig = plt.figure(figsize=(10, 7))
 
@@ -27,7 +33,7 @@ if(do_you == "yes"):
 
 
 # Training
-generator = generator.Generator(gen_noise_struc=[([200], "relu")], gen_cond_struc=[([1000], "relu")], gen_body_struc=[([1200], "relu")], output_activation="sigmoid", output_shape=(28,28))
+generator = generator.Generator()
 discriminator = discriminator.Discriminator(disc_img_struc=[([240], "relu", 1)], disc_cond_struc=[([50], "relu", 1)], disc_body_struc=[([240], "relu", 1)], output_activation="sigmoid", output_shape=(1,))
 
 noise_input_shape = 100
