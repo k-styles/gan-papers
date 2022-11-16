@@ -4,41 +4,48 @@ from discriminator_model import discriminator
 from matplotlib import pyplot as plt
 import logging
 from training_toolkit import train_tools
-import tensorflow_datasets.public_api as tfds
-
+import data
 tf.config.run_functions_eagerly(False)
-
-data = input("What data you want to train on? (LSUN, Imagenet-1k): ")
-if data == "LSUN":
-    #TODO: Load LSUN Dataset
-    #(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-else:
-    logging.error(f"Not yet implemented for {data}. This should be either reported or feel free to make a pull request.")
-
-fig = plt.figure(figsize=(10, 7))
-
-do_you = input("Do you want to visualize data?: (yes, no): ")
-
-if(do_you == "yes"):
-    rows_in = input("Number of rows you want: ")
-    columns_in = input("Number of columns you want: ")
-    rows = int(rows_in)
-    columns = int(columns_in)
-    for i in range(rows * columns):
-        fig.add_subplot(rows, columns, i + 1)
-        plt.imshow(x_train[i], cmap='gray')
-        plt.axis('off')
-
-    plt.show()
 
 
 # Training
-generator = generator.Generator()
-discriminator = discriminator.Discriminator(disc_img_struc=[([240], "relu", 1)], disc_cond_struc=[([50], "relu", 1)], disc_body_struc=[([240], "relu", 1)], output_activation="sigmoid", output_shape=(1,))
+generator = generator.Generator(
+    convT_blocks_struct=[
+        {
+		"filters"	: 512,
+		"kernel_size"	: 3
+        },
+	{
+		"filters"	: 128,
+		"kernel_size"	: 3
+	},
+	{
+		"filters"	: 64,
+		"kernel_size"	: 3
+	}
+    ],
+    output_layer_struct={
+		
+    }
+)
+
+discriminator = discriminator.Discriminator(
+	conv_blocks_struct=[
+	{
+		"filters"	: 512,
+		"kernel_size"	: 3
+	},
+	{
+		"filters"	: 128,
+		"kernel_size"	: 3
+	},
+	]
+)
+
 
 noise_input_shape = 100
 k = 1
-iterations=50000
+iterations=10000
 m = 100
 
 # Normalize pixels

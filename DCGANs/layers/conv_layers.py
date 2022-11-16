@@ -1,14 +1,14 @@
-from layer_checks import is_valid_conv_layer_struct, is_valid_convT_layer_struct
+import is_valid_conv_layer_struct, is_valid_convT_layer_struct
 import tensorflow as tf
 
 class Conv_block(tf.keras.layers.Layer):
-    def __init__(self, conv_struct, **kwargs):
+    def __init__(self, conv_block_struct, **kwargs):
         super(Conv_block, self).__init__(**kwargs)
         self.layers = []
-        if not isinstance(conv_struct, dict):
-            raise exception(f"[EXCEPTION]: Provided conv_struct should be a dictionary, instead it is \"{type(conv_struct)}\"")
-        for i, layer_struct in enumerate(conv_struct):
-            is_valid_conv_layer_struct(layer_struct)
+        if not isinstance(conv_block_struct, list):
+            raise exception(f"[EXCEPTION]: Provided conv_block_struct should be a list, instead it is \"{type(conv_block_struct)}\"")
+        for i, layer_struct in enumerate(conv_block_struct):
+            is_valid_convT_layer_struct(layer_struct)
             self.layers.append(tf.keras.layers.Conv2D(
                 filters=layer_struct["filters"],
                 kernel_size=layer_struct["kernel_size"],
@@ -37,14 +37,14 @@ class Conv_block(tf.keras.layers.Layer):
         return z
 
 class ConvT_block(tf.keras.layers.Layer):
-    def __init__(self, convT_struct, **kwargs):
+    def __init__(self, convT_block_struct, **kwargs):
         super(ConvT_block, self).__init__(**kwargs)
         self.layers = []
-        if not isinstance(convT_struct, dict):
-            raise exception(f"[EXCEPTION]: Provided convT_struct should be a dictionary, instead it is \"{type(convT_struct)}\"")
-        for i, layer_struct in enumerate(convT_struct):
+        if not isinstance(convT_block_struct, list):
+            raise exception(f"[EXCEPTION]: Provided convT_block_struct should be a list, instead it is \"{type(convT_block_struct)}\"")
+        for i, layer_struct in enumerate(convT_block_struct):
             is_valid_convT_layer_struct(layer_struct)
-            self.layers.append(tf.keras.layers.Conv2D(
+            self.layers.append(tf.keras.layers.Conv2DTranspose(
                 filters=layer_struct["filters"],
                 kernel_size=layer_struct["kernel_size"],
                 strides=layer_struct["strides"],
@@ -104,7 +104,7 @@ class Output_convT_layer(tf.keras.layers.Layer):
     def __init__(self, output_layer_struct, **kwargs):
         super(Output_conv_layer, self).__init__(**kwargs)
         is_valid_conv_layer_struct(layer_struct)
-        self.output_layer = tf.keras.layers.Conv2D(
+        self.output_layer = tf.keras.layers.Conv2DTranspose(
                 filters=layer_struct["filters"],
                 kernel_size=layer_struct["kernel_size"],
                 strides=layer_struct["strides"],

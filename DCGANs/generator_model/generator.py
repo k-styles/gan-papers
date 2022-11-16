@@ -3,8 +3,7 @@ import tensorflow as tf
 from layers import conv_layers
 
 class Generator(tf.keras.Model):
-    def __init__(self, conv_blocks_struct=[], convT_blocks_struct, output_layer_struct={}, 
-                 **kwargs):
+    def __init__(self, convT_blocks_struct=[], output_layer_struct={}, **kwargs):
         super(Generator, self).__init__(**kwargs)
         self.convT_blocks = []
         for i, convT_block_struct in enumerate(convT_blocks_struct):
